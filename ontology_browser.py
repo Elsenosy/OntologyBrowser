@@ -1,5 +1,6 @@
 from owlready2 import *
 import os
+import types
 
 
 cont = "y" #breaking var
@@ -12,6 +13,7 @@ Please select an operation:
 	2) List object properties
 	3) List individuals
 	4) List data properties
+	5) Insert new class
 	
 	>> """))
 	return operation
@@ -32,6 +34,9 @@ def handle_operations(option, onto):
 	elif option == 4:
 		#list all data properties
 		list_data_properties(onto)
+	elif option == 5:
+		#Insert new class
+		insert_class(onto)
 	else:
 		print("Unkown operation")
 
@@ -87,6 +92,48 @@ def list_data_properties(onto):
 		count += 1
 	print("Total: {}".format(count))
 	return list(onto.data_properties())
+
+#get ontology Classes as only names, not with namespace.classname for ex: university.class = 'class'
+def get_onto_class_names(onto):
+	classNames = list()
+	# append parent class (Thing)
+	classNames.append("Thing")
+	for className in list_classes(onto):
+		NewClassName = str(className).split(".")[1]
+		classNames.append(NewClassName)
+
+	return classNames
+
+# insert new Class
+def insert_class(onto):
+	with onto:
+		# Get all Classes
+		list_of_classes = get_onto_class_names(onto)
+		# Print all classes to choose class
+		for i in range(0, len(list_of_classes)):
+			print("{}. {}".format(i+1, list_of_classes[i]))
+		# Get the parent class
+		classIndexChosen = int(input("Please select parent class: "))
+		classIndexChosen -= 1
+		# Load parent class as Ontology Entity
+		calledClass = onto[list_of_classes[classIndexChosen]]
+		#check if the parent class is Thing
+		if(classIndexChosen == list_of_classes.index("Thing")):
+			calledClass = Thing
+		# Ask user for new class name, and trim spaces from that name
+		NewClassName = str(input("Please enter class name: ")).replace(" ", "")
+
+		#Check if class is not exists
+		if NewClassName in get_onto_class_names(onto):
+			print("Sorry, Class already exists")
+		else:
+			#create the new class and append it to the parent class
+			NewClass = types.new_class(NewClassName, (calledClass,))
+			#save Ontology
+			onto.save()
+			#check if it is saved
+			if NewClassName in get_onto_class_names(onto):
+				print("Class: '{}' which parent of '{}' has been added successfully".format(NewClassName, list_of_classes[classIndexChosen]))
 
 #App name
 print("Ontology browser 1.0")
